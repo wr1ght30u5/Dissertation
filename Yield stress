@@ -1,0 +1,239 @@
+from part import *
+from material import *
+from section import *
+from assembly import *
+from step import *
+from interaction import *
+from load import *
+from mesh import *
+from optimization import *
+from job import *
+from sketch import *
+from visualization import *
+from connectorBehavior import *
+import os
+import matplotlib.pyplot as plt
+import numpy as np
+
+#Open Model-1
+
+
+    
+  #Change work directory
+os.chdir(r"D:\Dissertation\Chicken leg")
+# os.chdir(r"C:\Users\pinhosl3\Desktop\Projects\Cole")
+
+
+# #VERY IMPORTANT
+session.journalOptions.setValues(replayGeometry=COORDINATE, recoverGeometry=COORDINATE)
+
+base_dir = os.getcwd()
+folder_prefix = "/Chicken leg "
+folder_number = 1
+folder_path = base_dir + folder_prefix + str(folder_number)
+
+while os.path.exists(folder_path):
+    folder_number += 1
+    folder_path = base_dir + folder_prefix + str(folder_number)
+
+os.mkdir(folder_path)
+os.chdir(folder_path)
+
+
+Load_1 = 100
+Load_2 = 100
+Load_3 = 100
+mesh_size =25
+
+def TopologyCylinder(fy):
+
+#Open Model
+    mdb.openAcis(
+    'D:\Dissertation\Chicken leg/220511 Branching column.sat'
+    , scaleFromFile=OFF)
+    mdb.models['Model-1'].PartFromGeometryFile(combine=False, dimensionality=
+    THREE_D, geometryFile=mdb.acis, name='P220511 Branching column', type=
+    DEFORMABLE_BODY)
+        
+  #Material
+    mdb.models['Model-1'].Material(name='Material-1')
+    mdb.models['Model-1'].materials['Material-1'].Elastic(table=((210000, 0.3), ))
+    mdb.models['Model-1'].materials['Material-1'].Plastic(table=((fy,0.0), ))
+   
+#Section
+    mdb.models['Model-1'].HomogeneousSolidSection(material='Material-1', name=
+        'Section-1', thickness=None)
+    mdb.models['Model-1'].parts['P220511 Branching column'].Set(cells=
+        mdb.models['Model-1'].parts['P220511 Branching column'].cells.getSequenceFromMask(
+        ('[#1 ]', ), ), name='Set-1')
+    mdb.models['Model-1'].parts['P220511 Branching column'].SectionAssignment(
+        offset=0.0, offsetField='', offsetType=MIDDLE_SURFACE, region=
+        mdb.models['Model-1'].parts['P220511 Branching column'].sets['Set-1'], 
+        sectionName='Section-1', thicknessAssignment=FROM_SECTION)
+        
+       #Assembly
+    mdb.models['Model-1'].rootAssembly.DatumCsysByDefault(CARTESIAN)
+    mdb.models['Model-1'].rootAssembly.Instance(dependent=ON, name=
+        'P220511 Branching column-1', part=
+        mdb.models['Model-1'].parts['P220511 Branching column'])
+    mdb.models['Model-1'].StaticStep(name='Step-1', previous='Initial')
+    mdb.models['Model-1'].rootAssembly.Set(faces=
+        mdb.models['Model-1'].rootAssembly.instances['P220511 Branching column-1'].faces.getSequenceFromMask(
+        ('[#0 #1040 ]', ), ), name='Set-1')
+        
+        #Step 
+    mdb.models['Model-1'].StaticStep(initialInc=0.025,maxInc=0.025,maxNumInc=40, name='Step-1', 
+            nlgeom=ON, previous='Initial')    
+        
+       #Boundary Conditions
+    mdb.models['Model-1'].DisplacementBC(amplitude=UNSET, createStepName='Step-1', 
+        distributionType=UNIFORM, fieldName='', fixed=OFF, localCsys=None, name=
+        'BC-1', region=mdb.models['Model-1'].rootAssembly.sets['Set-1'], u1=0.0, 
+        u2=0.0, u3=0.0, ur1=0.0, ur2=0.0, ur3=0.0)
+
+#Loads
+    mdb.models['Model-1'].rootAssembly.Set(name='Set-2', vertices=
+        mdb.models['Model-1'].rootAssembly.instances['P220511 Branching column-1'].vertices.getSequenceFromMask(
+        ('[#9300 #40000c10 ]', ), ))
+    mdb.models['Model-1'].ConcentratedForce(cf3=-Load_1, createStepName='Step-1', 
+        distributionType=UNIFORM, field='', localCsys=None, name='Load-1', region=
+        mdb.models['Model-1'].rootAssembly.sets['Set-2'])
+        
+    mdb.models['Model-1'].rootAssembly.Set(name='Set-3', vertices=
+        mdb.models['Model-1'].rootAssembly.instances['P220511 Branching column-1'].vertices.getSequenceFromMask(
+        ('[#93 #20019000 ]', ), ))
+    mdb.models['Model-1'].ConcentratedForce(cf3=-Load_2,createStepName='Step-1', 
+        distributionType=UNIFORM, field='', localCsys=None, name='Load-2', region=
+        mdb.models['Model-1'].rootAssembly.sets['Set-3'])
+        
+    mdb.models['Model-1'].rootAssembly.Set(name='Set-4', vertices=
+        mdb.models['Model-1'].rootAssembly.instances['P220511 Branching column-1'].vertices.getSequenceFromMask(
+        ('[#930000 #100e0000 ]', ), ))
+    mdb.models['Model-1'].ConcentratedForce(cf3=-Load_3, createStepName='Step-1', 
+        distributionType=UNIFORM, field='', localCsys=None, name='Load-3', region=
+        mdb.models['Model-1'].rootAssembly.sets['Set-4'])
+
+
+    mdb.models['Model-1'].rootAssembly.makeIndependent(instances=(
+        mdb.models['Model-1'].rootAssembly.instances['P220511 Branching column-1'], 
+        ))
+    mdb.models['Model-1'].rootAssembly.setMeshControls(elemShape=TET, regions=
+        mdb.models['Model-1'].rootAssembly.instances['P220511 Branching column-1'].cells.getSequenceFromMask(
+        ('[#1 ]', ), ), technique=FREE)
+    mdb.models['Model-1'].rootAssembly.setElementType(elemTypes=(ElemType(
+        elemCode=C3D20R, elemLibrary=STANDARD), ElemType(elemCode=C3D15, 
+        elemLibrary=STANDARD), ElemType(elemCode=C3D10, elemLibrary=STANDARD)), 
+        regions=(
+        mdb.models['Model-1'].rootAssembly.instances['P220511 Branching column-1'].cells.getSequenceFromMask(
+        ('[#1 ]', ), ), ))
+        
+        #Mesh
+    mdb.models['Model-1'].rootAssembly.seedPartInstance(deviationFactor=0.1, 
+        minSizeFactor=0.1, regions=(
+        mdb.models['Model-1'].rootAssembly.instances['P220511 Branching column-1'], 
+        ), size=mesh_size)
+    mdb.models['Model-1'].rootAssembly.generateMesh(regions=(
+        mdb.models['Model-1'].rootAssembly.instances['P220511 Branching column-1'], 
+        ))
+
+#Optimisation
+    mdb.models['Model-1'].TopologyTask(name='Task-1', region=MODEL, 
+        freezeBoundaryConditionRegions=ON)
+    session.viewports['Viewport: 1'].assemblyDisplay.setValues(
+        optimizationTask='Task-1')
+    mdb.models['Model-1'].optimizationTasks['Task-1'].SingleTermDesignResponse(
+        name='D-Response-1', region=MODEL, identifier='STRAIN_ENERGY', 
+        drivingRegion=None, operation=SUM, stepOptions=())
+    mdb.models['Model-1'].optimizationTasks['Task-1'].SingleTermDesignResponse(
+        name='D-Response-2', region=MODEL, identifier='VOLUME', 
+        drivingRegion=None, operation=SUM, stepOptions=())
+    mdb.models['Model-1'].optimizationTasks['Task-1'].ObjectiveFunction(
+        name='Objective-1', objectives=((OFF, 'D-Response-1', 1.0, 0.0, ''), ))
+    mdb.models['Model-1'].optimizationTasks['Task-1'].OptimizationConstraint(
+        name='Opt-Constraint-1', designResponse='D-Response-2', 
+        restrictionMethod=RELATIVE_LESS_THAN_EQUAL, restrictionValue=0.5)
+    mdb.models['Model-1'].optimizationTasks['Task-1'].TopologyOverhangControl(csys=
+     None, draftAngle=45.0, name='Restrict-1', overhangCheckRegion=
+     OVERHANG_REGION, pointRegion=
+     mdb.models['Model-1'].rootAssembly.sets['Set-7'], pullDirection=((0.0, 0.0, 
+     0.0), (0.0, 0.0, 1.0)), radius=0.0, region=MODEL, technique=POINT)
+    session.viewports['Viewport: 1'].assemblyDisplay.setValues(
+        optimizationTasks=OFF, geometricRestrictions=OFF, stopConditions=OFF)
+    mdb.OptimizationProcess(name='Opt-Process-1', model='Model-1', task='Task-1', 
+        description='', prototypeJob='Opt-Process-1-Job', maxDesignCycle=25, 
+        odbMergeFrequency=2, dataSaveFrequency=OPT_DATASAVE_SPECIFY_CYCLE, 
+        saveInitial=False)
+    mdb.optimizationProcesses['Opt-Process-1'].Job(name='Opt-Process-1-Job', 
+        model='Model-1', atTime=None, waitMinutes=0, waitHours=0, queue=None, 
+        memory=90, memoryUnits=PERCENTAGE, getMemoryFromAnalysis=True, 
+        multiprocessingMode=DEFAULT, numCpus=2, numDomains=2, numGPUs=1)
+   
+    mdb.optimizationProcesses['Opt-Process-1'].setValues(dataSaveFrequency=
+    OPT_DATASAVE_EVERY_CYCLE)
+    mdb.optimizationProcesses['Opt-Process-1'].jobs['Opt-Process-1-Job'].setValues()    
+        
+    # mdb.optimizationProcesses['Opt-Process-1'].submit()
+    # a = mdb.models['Model-1'].rootAssembly
+    # session.viewports['Viewport: 1'].setValues(displayedObject=a)
+    # mdb.optimizationProcesses['Opt-Process-1'].waitForCompletion()
+    # print("Model with fy = %s is completed" % str(fy))
+
+def PostProcessOptimization():
+    mdb.CombineOptResults(optResultLocation=folder_path + "/" + str(fy) + "/" + 'Opt-Process-1', 
+        includeResultsFrom=LAST, optIter=ALL, models=ALL, steps=('Step-1', ), 
+        analysisFieldVariables=('DRESP_STIFF', 'MAT_PROP_NORMALIZED', 'S', 'U', 'D_STIFF__DENSITY'))
+    session.mdbData.summary() #useless
+    o6 = session.openOdb(name=folder_path + "/" + str(fy) + "/" + 'Opt-Process-1/TOSCA_POST/Opt-Process-1-Job_post.odb')
+    
+    session.viewports['Viewport: 1'].setValues(displayedObject=o6)
+    
+    session.viewports['Viewport: 1'].odbDisplay.setValues(viewCutNames=('Opt_Surface', ), viewCut=OFF)
+    session.viewports['Viewport: 1'].odbDisplay.setValues(viewCut=ON)
+    
+    session.viewports['Viewport: 1'].odbDisplay.setPrimaryVariable(
+        variableLabel='MAT_PROP_NORMALIZED', outputPosition=ELEMENT_CENTROID, )
+    session.viewports['Viewport: 1'].odbDisplay.display.setValues(
+        plotState=CONTOURS_ON_DEF)
+    session.viewports['Viewport: 1'].odbDisplay.viewCuts['Opt_Surface'].setValues(
+        showModelAboveCut=True)
+        
+    # session.viewports['Viewport: 1'].odbDisplay.setFrame(step=1, frame=4 )
+    # session.viewports['Viewport: 1'].view.setValues(session.views['Front'])
+    # session.viewports['Viewport: 1'].view.setValues(session.views['Back'])
+    # session.viewports['Viewport: 1'].view.setValues(session.views['Top'])
+   
+    # session.viewports['Viewport: 1'].view.setValues(session.views['Left'])
+    # session.viewports['Viewport: 1'].view.setValues(session.views['Right'])
+    session.viewports['Viewport: 1'].view.setValues(session.views['Bottom'])
+    for cut_percentage in np.arange(0.1,1.0,0.1):
+        session.viewports['Viewport: 1'].view.fitView()
+        session.viewports['Viewport: 1'].odbDisplay.viewCuts['Opt_Surface'].setValues(value=cut_percentage)
+        session.printToFile(fileName='%s_bottom.jpeg' % str(round(cut_percentage,1)), format=PNG, canvasObjects=(session.viewports['Viewport: 1'], ))
+    
+    session.viewports['Viewport: 1'].view.setValues(session.views['Iso'])
+    for cut_percentage in np.arange(0.1,1.0,0.1):
+        session.viewports['Viewport: 1'].view.fitView()
+        session.viewports['Viewport: 1'].odbDisplay.viewCuts['Opt_Surface'].setValues(value=cut_percentage)
+        session.printToFile(fileName='%s_3D.jpeg' % str(round(cut_percentage,1)), format=PNG, canvasObjects=(session.viewports['Viewport: 1'], ))
+    
+    session.viewports['Viewport: 1'].view.setValues(nearPlane=2495.19,farPlane=4505.98, width=2710.43, height=1104, cameraPosition=(-1399.93, 
+        -2118.53, 3009.58), cameraUpVector=(0.141946, 0.907734, 0.394805),cameraTarget=(-21.9662, -38.5189, 638.108))
+    for cut_percentage in np.arange(0.1,1.0,0.1):
+        session.viewports['Viewport: 1'].view.fitView()
+        session.viewports['Viewport: 1'].odbDisplay.viewCuts['Opt_Surface'].setValues(value=cut_percentage)
+        session.printToFile(fileName='%s_custom_view.jpeg' % str(round(cut_percentage,1)), format=PNG, canvasObjects=(session.viewports['Viewport: 1'], ))
+
+    session.viewports['Viewport: 1'].view.setValues(nearPlane=3126.75,farPlane=5678.24, width=1716.13, height=1484.58, cameraPosition=(
+        2346.19, 195.966, 4544.32), cameraUpVector=(-0.815549, -0.162149,0.555506), cameraTarget=(-97.1968, -48.5283, 885.773))
+    for cut_percentage in np.arange(0.1,1.0,0.1):
+        session.viewports['Viewport: 1'].view.fitView()
+        session.viewports['Viewport: 1'].odbDisplay.viewCuts['Opt_Surface'].setValues(value=cut_percentage)
+        session.printToFile(fileName='%s_custom_view.jpeg' % str(round(cut_percentage,1)), format=PNG, canvasObjects=(session.viewports['Viewport: 1'], ))
+
+
+for fy in [235.0, 275.0, 355.0, 430.0]:
+    
+    os.mkdir(folder_path + "/" + str(fy))
+    os.chdir(folder_path + "/" + str(fy))
+    TopologyCylinder(fy)
+    # PostProcessOptimization()
